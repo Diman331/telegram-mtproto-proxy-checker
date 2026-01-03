@@ -1,4 +1,4 @@
-# Telegram MTProto Proxy Verifier
+# Telegram MTProto Proxy Checker
 
 A Node.js CLI tool that verifies Telegram MTProto proxies by actually communicating with Telegram servers using the official TDLib API.
 
@@ -14,6 +14,16 @@ A Node.js CLI tool that verifies Telegram MTProto proxies by actually communicat
 - ✅ **Cross-Platform**: Works on Windows, Linux, and macOS
 
 ## Installation
+
+### Clone from GitHub
+
+```bash
+git clone https://github.com/AmirTahaMim/telegram-mtproto-proxy-checker.git
+cd telegram-mtproto-proxy-checker
+npm install
+```
+
+### Install Dependencies
 
 ```bash
 npm install
@@ -164,12 +174,18 @@ NO: CONNECTION_REFUSED: Proxy server refused the connection
 - Verify the server IP/hostname and port are correct
 - Some proxies may have longer response times - this is normal
 
-## License
-
-MIT
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details
 
 
