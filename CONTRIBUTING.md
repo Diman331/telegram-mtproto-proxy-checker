@@ -1,4 +1,4 @@
-# Contributing to Telegram Proxy Verifier
+# Contributing to Telegram MTProto Proxy Checker
 
 Thank you for your interest in contributing!
 
@@ -29,6 +29,3 @@ When reporting issues, please include:
 ## Feature Requests
 
 Feel free to open an issue to discuss new features before implementing them.
-
-
-

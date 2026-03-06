@@ -27,12 +27,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AmirTahaMim/telegram-mtproto-proxy-checker.git"
+    "url": "https://github.com/Diman331/telegram-mtproto-proxy-checker.git"
   },
   "bugs": {
-    "url": "https://github.com/AmirTahaMim/telegram-mtproto-proxy-checker/issues"
+    "url": "https://github.com/Diman331/telegram-mtproto-proxy-checker/issues"
   },
-  "homepage": "https://github.com/AmirTahaMim/telegram-mtproto-proxy-checker#readme",
+  "homepage": "https://github.com/Diman331/telegram-mtproto-proxy-checker#readme",
   "engines": {
     "node": ">=18.0.0"
   },

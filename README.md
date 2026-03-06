@@ -14,26 +14,51 @@ A Node.js CLI tool that verifies Telegram MTProto proxies by actually communicat
 - ✅ **Cross-Platform**: Works on Windows, Linux, and macOS
 - ✅ **Telegram Bot**: Built-in bot for easy proxy verification via Telegram
 
-## Installation
+## Установка
 
-### Clone from GitHub
+### Быстрая установка (рекомендуется)
 
 ```bash
-git clone https://github.com/AmirTahaMim/telegram-mtproto-proxy-checker.git
+curl -sL https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh | bash
+```
+
+Или скачайте и запустите вручную:
+
+```bash
+chmod +x install-auto.sh
+./install-auto.sh
+```
+
+### Ручная установка
+
+```bash
+# Клонируйте репозиторий
+git clone https://github.com/Diman331/telegram-mtproto-proxy-checker.git
 cd telegram-mtproto-proxy-checker
+
+# Установите зависимости
 npm install
+
+# Настройте переменные окружения
+cp .env.example .env
+nano .env  # Добавьте TELEGRAM_BOT_TOKEN и ADMIN_ID
+
+# Запустите бота
+npm run bot
 ```
 
-### Install Dependencies
+### Полная установка с автозапуском
 
 ```bash
-npm install
+chmod +x install.sh
+./install.sh
 ```
 
-This will install:
-- `tdl` - Node.js wrapper for TDLib
-- `tdl-tdlib-addon` - TDLib native bindings
-- `prebuilt-tdlib` - Pre-built TDLib binaries for your platform
+Этот скрипт:
+- Установит все системные зависимости
+- Установит npm пакеты
+- Создаст .env файл
+- Предложит настроить автозапуск через systemd
 
 ## Telegram Bot
 
