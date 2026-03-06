@@ -13,4 +13,7 @@ tdjson.dll
 *~
 .vscode/
 .idea/
+.env
+proxies_db.json
+*.txt
 

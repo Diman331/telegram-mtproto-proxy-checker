@@ -1,8 +1,21 @@
 #!/usr/bin/env node
 
+// Set LD_LIBRARY_PATH before loading TDLib
+const path = require('path');
+const { getTdjson } = require('prebuilt-tdlib');
+
+try {
+  const tdlibPath = path.dirname(getTdjson());
+  const currentLdPath = process.env.LD_LIBRARY_PATH || '';
+  if (!currentLdPath.includes(tdlibPath)) {
+    process.env.LD_LIBRARY_PATH = tdlibPath + (currentLdPath ? ':' + currentLdPath : '');
+  }
+} catch (error) {
+  // Ignore if prebuilt-tdlib not available
+}
+
 const { Client } = require('tdl');
 const { TDLib } = require('tdl-tdlib-addon');
-const { getTdjson } = require('prebuilt-tdlib');
 const tdl = require('tdl');
 
 // Configure tdl to use prebuilt TDLib
