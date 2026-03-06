@@ -1,5 +1,17 @@
 # Автозапуск бота через systemd
 
+## Быстрая установка через скрипт
+
+Вместо ручной настройки можно использовать скрипт установки:
+
+```bash
+./install.sh
+```
+
+Выберите опцию **1) Install** и согласитесь на настройку systemd.
+
+## Ручная настройка
+
 ## 1. Создайте службу systemd
 
 ```bash
@@ -89,3 +101,37 @@ sudo systemctl restart telegram-proxy-bot
 - `bot_settings.json` - настройки автопроверки
 
 Эти файлы сохраняются автоматически и не требуют настройки.
+
+## 6. Обновление и удаление
+
+### Обновление через скрипт:
+```bash
+./install.sh
+# Выбрать опцию 2) Update
+```
+
+### Обновление вручную:
+```bash
+git pull
+npm install
+sudo systemctl restart telegram-proxy-bot
+```
+
+### Удаление через скрипт:
+```bash
+./install.sh
+# Выбрать опцию 3) Uninstall
+```
+
+### Удаление вручную:
+```bash
+# Остановить службу
+sudo systemctl stop telegram-proxy-bot
+sudo systemctl disable telegram-proxy-bot
+sudo rm /etc/systemd/system/telegram-proxy-bot.service
+sudo systemctl daemon-reload
+
+# Удалить файлы
+rm -rf node_modules
+rm -f proxies_db.json bot_settings.json .env
+```
