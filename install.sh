@@ -256,7 +256,9 @@ do_install() {
     echo "  - README.md - General documentation"
     echo "  - AUTO_START.md - Auto-start guide"
     echo "  - PROJECT_SUMMARY.md - Project overview"
+    echo "  - manage.sh - Management menu"
     echo ""
+    log_info "Run './manage.sh' for interactive management"
     
     # Ask about systemd setup
     setup_systemd

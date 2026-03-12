@@ -75,6 +75,7 @@
 ### Скрипты установки
 - `install.sh` — интерактивный установщик (Install/Update/Uninstall)
 - `install-auto.sh` — быстрая установка одной командой
+- `manage.sh` — меню управления ботом
 
 ## Зависимости
 
@@ -96,11 +97,18 @@ ADMIN_ID=your-telegram-user-id
 
 ## Запуск
 
+### Через меню управления (рекомендуется)
 ```bash
-# Через npm
-npm run bot
+./manage.sh
+```
 
-# Или напрямую
+### Через npm
+```bash
+npm run bot
+```
+
+### Напрямую
+```bash
 node bot.js
 ```
 

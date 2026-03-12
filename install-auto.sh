@@ -51,16 +51,28 @@ fi
 # Install system dependencies
 echo "📦 Installing system dependencies..."
 if command -v apt-get &> /dev/null; then
-    apt-get update -qq && apt-get install -y -qq nodejs npm gcc g++ make python3 curl 2>/dev/null || true
+    apt-get update -qq
+    apt-get install -y -qq nodejs npm gcc g++ make python3 curl git 2>/dev/null || {
+        echo "⚠️ apt-get failed, continuing..."
+    }
 elif command -v yum &> /dev/null; then
-    yum install -y -q nodejs npm gcc gcc-c++ make python3 curl 2>/dev/null || true
+    yum install -y -q nodejs npm gcc gcc-c++ make python3 curl git 2>/dev/null || {
+        echo "⚠️ yum failed, continuing..."
+    }
 elif command -v dnf &> /dev/null; then
-    dnf install -y -q nodejs npm gcc gcc-c++ make python3 curl 2>/dev/null || true
+    dnf install -y -q nodejs npm gcc gcc-c++ make python3 curl git 2>/dev/null || {
+        echo "⚠️ dnf failed, continuing..."
+    }
 fi
 
 # Install npm dependencies
 echo "📦 Installing npm dependencies..."
-npm install --silent
+if npm install --silent 2>/dev/null; then
+    echo "✅ npm dependencies installed"
+else
+    echo "⚠️ npm install failed, trying with sudo..."
+    npm install --silent --unsafe-perm || echo "❌ npm install failed completely"
+fi
 
 # Create .env if not exists
 if [ ! -f ".env" ]; then
@@ -72,13 +84,14 @@ echo ""
 echo "✅ Installation complete!"
 echo ""
 echo "📝 Next steps:"
-echo "   1. Edit .env: nano .env"
+echo "   1. Run: ./manage.sh"
 echo "   2. Add your TELEGRAM_BOT_TOKEN from @BotFather"
 echo "   3. (Optional) Add ADMIN_ID from @userinfobot"
-echo "   4. Run: npm run bot"
+echo "   4. Start the bot from the menu"
 echo ""
 echo "📚 Documentation:"
 echo "   - README.md"
 echo "   - AUTO_START.md (for systemd auto-start)"
 echo "   - PROJECT_SUMMARY.md (project overview)"
+echo "   - manage.sh (management menu)"
 echo ""
