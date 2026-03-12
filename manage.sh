@@ -268,6 +268,10 @@ start_bot() {
         log_info "Starting bot in foreground..."
         log_warn "Press Ctrl+C to stop"
         echo ""
+        # Load environment variables from .env
+        set -a
+        source .env
+        set +a
         node bot.js
     fi
     
@@ -474,6 +478,12 @@ autostart_settings() {
         fi
     else
         log_warn "Systemd service not installed"
+        echo ""
+        read -p "Install systemd service? (y/n): " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            install_systemd_service
+        fi
     fi
     
     echo ""
@@ -530,6 +540,55 @@ autostart_settings() {
             ;;
     esac
     
+    echo ""
+    read -p "Press Enter to continue..."
+    show_menu
+}
+
+# Install systemd service
+install_systemd_service() {
+    echo ""
+    echo "Installing systemd service..."
+    
+    # Check .env
+    if [ ! -f ".env" ]; then
+        log_error ".env not found. Set bot token first!"
+        return
+    fi
+    
+    # Load env to validate
+    source .env 2>/dev/null || true
+    
+    if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ "$TELEGRAM_BOT_TOKEN" = "your-bot-token-here" ]; then
+        log_error "Bot token not set in .env!"
+        return
+    fi
+    
+    # Create service file
+    cat > /etc/systemd/system/telegram-proxy-bot.service << EOF
+[Unit]
+Description=Telegram MTProto Proxy Checker Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$SCRIPT_DIR
+EnvironmentFile=$SCRIPT_DIR/.env
+ExecStart=/usr/bin/node $SCRIPT_DIR/bot.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    # Reload and enable
+    systemctl daemon-reload
+    systemctl enable telegram-proxy-bot
+    systemctl start telegram-proxy-bot
+    
+    log_info "Systemd service installed and started!"
     echo ""
     read -p "Press Enter to continue..."
     show_menu

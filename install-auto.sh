@@ -119,6 +119,51 @@ WRAPPER
 chmod +x /usr/local/bin/mtprotobot
 echo "✅ Global command 'mtprotobot' installed"
 
+# Ask about systemd auto-start
+echo ""
+read -p "Setup systemd auto-start? (y/n): " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "🔧 Setting up systemd service..."
+    
+    # Load env to validate
+    if [ -f ".env" ]; then
+        source .env 2>/dev/null || true
+    fi
+    
+    if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ "$TELEGRAM_BOT_TOKEN" != "your-bot-token-here" ]; then
+        # Create service file
+        cat > /etc/systemd/system/telegram-proxy-bot.service << EOF
+[Unit]
+Description=Telegram MTProto Proxy Checker Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$INSTALL_DIR
+EnvironmentFile=$INSTALL_DIR/.env
+ExecStart=/usr/bin/node $INSTALL_DIR/bot.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        
+        # Reload and enable
+        systemctl daemon-reload
+        systemctl enable telegram-proxy-bot
+        systemctl start telegram-proxy-bot
+        
+        echo "✅ Systemd service installed and started!"
+        echo "   View logs: journalctl -u telegram-proxy-bot -f"
+    else
+        echo "⚠️ Skipping systemd setup (bot token not set)"
+        echo "   Run 'mtprotobot' and use menu to configure later"
+    fi
+fi
+
 echo ""
 echo "=========================================="
 echo "✅ Installation complete!"
