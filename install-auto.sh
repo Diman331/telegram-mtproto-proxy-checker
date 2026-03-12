@@ -6,26 +6,36 @@
 
 set -e
 
-# Check if running from curl (piped input)
-if [ -t 0 ]; then
-    # Running from file, execute normally
+# Check if already downloaded (prevent infinite loop)
+if [ "$DOWNLOADED_FROM_GITHUB" = "1" ]; then
+    # Already downloaded, proceed with installation
+    unset DOWNLOADED_FROM_GITHUB
+    # Get script directory
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     cd "$SCRIPT_DIR"
 else
-    # Running from pipe (curl), download and save locally first
-    echo "🔄 Downloading latest installer from GitHub..."
-    SCRIPT_URL="https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh"
-    
-    # Try to download to temporary file
-    TEMP_SCRIPT=$(mktemp)
-    if curl -sL "$SCRIPT_URL" -o "$TEMP_SCRIPT" 2>/dev/null; then
-        echo "✅ Downloaded latest version"
-        # Replace this script with the downloaded one
-        exec bash "$TEMP_SCRIPT" "$@"
+    # Check if running from curl (piped input)
+    if ! [ -t 0 ]; then
+        # Running from pipe (curl), download and save locally first
+        echo "🔄 Downloading latest installer from GitHub..."
+        SCRIPT_URL="https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh"
+        
+        # Try to download to temporary file
+        TEMP_SCRIPT=$(mktemp)
+        if curl -sL "$SCRIPT_URL" -o "$TEMP_SCRIPT" 2>/dev/null; then
+            echo "✅ Downloaded latest version"
+            # Replace this script with the downloaded one
+            export DOWNLOADED_FROM_GITHUB=1
+            exec bash "$TEMP_SCRIPT" "$@"
+        else
+            echo "⚠️ Could not download latest version, using local version..."
+        fi
+        rm -f "$TEMP_SCRIPT" 2>/dev/null
     else
-        echo "⚠️ Could not download latest version, using local version..."
+        # Running from file, get script directory
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        cd "$SCRIPT_DIR"
     fi
-    rm -f "$TEMP_SCRIPT" 2>/dev/null
 fi
 
 echo "🤖 Telegram MTProto Proxy Checker Bot - Quick Install"
