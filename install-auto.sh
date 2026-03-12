@@ -2,44 +2,22 @@
 
 # One-line installer for Telegram MTProto Proxy Checker Bot
 # Usage: curl -sL https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh | bash
-# This script will update itself from GitHub if run via curl
 
 set -e
 
-# Check if already downloaded (prevent infinite loop)
-if [ "$DOWNLOADED_FROM_GITHUB" = "1" ]; then
-    # Already downloaded, proceed with installation
-    unset DOWNLOADED_FROM_GITHUB
-    # Get script directory
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    cd "$SCRIPT_DIR"
-else
-    # Check if running from curl (piped input)
-    if ! [ -t 0 ]; then
-        # Running from pipe (curl), download and save locally first
-        echo "🔄 Downloading latest installer from GitHub..."
-        SCRIPT_URL="https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh"
-        
-        # Try to download to temporary file
-        TEMP_SCRIPT=$(mktemp)
-        if curl -sL "$SCRIPT_URL" -o "$TEMP_SCRIPT" 2>/dev/null; then
-            echo "✅ Downloaded latest version"
-            # Replace this script with the downloaded one
-            export DOWNLOADED_FROM_GITHUB=1
-            exec bash "$TEMP_SCRIPT" "$@"
-        else
-            echo "⚠️ Could not download latest version, using local version..."
-        fi
-        rm -f "$TEMP_SCRIPT" 2>/dev/null
-    else
-        # Running from file, get script directory
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        cd "$SCRIPT_DIR"
-    fi
-fi
-
 echo "🤖 Telegram MTProto Proxy Checker Bot - Quick Install"
 echo ""
+
+# Get script directory or use current directory
+if [ -n "$INSTALL_DIR" ]; then
+    cd "$INSTALL_DIR"
+elif [ -d "telegram-mtproto-proxy-checker" ]; then
+    cd telegram-mtproto-proxy-checker
+elif [ -d "telegram-mtproto-proxy-checker-1" ]; then
+    cd telegram-mtproto-proxy-checker-1
+fi
+
+INSTALL_DIR=$(pwd)
 
 # Check and install git if not present
 if ! command -v git &> /dev/null; then
@@ -59,46 +37,43 @@ if ! command -v git &> /dev/null; then
 fi
 
 # Clone or update repository
-if [ -d "telegram-mtproto-proxy-checker" ] && [ -f "telegram-mtproto-proxy-checker/bot.js" ]; then
-    echo "📁 Repository exists, updating..."
-    cd telegram-mtproto-proxy-checker
-    if [ -d ".git" ]; then
-        git pull --quiet
-    else
-        echo "⚠️ Not a git repository, skipping update"
-    fi
-elif [ -d "telegram-mtproto-proxy-checker-1" ] && [ -f "telegram-mtproto-proxy-checker-1/bot.js" ]; then
-    echo "📁 Repository exists (old name), updating..."
-    cd telegram-mtproto-proxy-checker-1
-    if [ -d ".git" ]; then
-        git pull --quiet
-    else
-        echo "⚠️ Not a git repository, skipping update"
-    fi
+if [ -d "$INSTALL_DIR/.git" ]; then
+    echo "📁 Repository exists, updating from GitHub..."
+    git fetch --quiet
+    git reset --hard origin/master --quiet
+    git pull --quiet
+    echo "✅ Repository updated"
 else
-    echo "📥 Cloning repository..."
+    echo "📥 Cloning repository from GitHub..."
+    cd /tmp
+    rm -rf telegram-mtproto-proxy-checker 2>/dev/null || true
     git clone --quiet https://github.com/Diman331/telegram-mtproto-proxy-checker.git
-    cd telegram-mtproto-proxy-checker
+    rm -rf "$INSTALL_DIR" 2>/dev/null || true
+    mv telegram-mtproto-proxy-checker "$INSTALL_DIR"
+    cd "$INSTALL_DIR"
+    echo "✅ Repository cloned"
 fi
 
 # Install system dependencies
+echo ""
 echo "📦 Installing system dependencies..."
 if command -v apt-get &> /dev/null; then
     apt-get update -qq
-    apt-get install -y -qq nodejs npm gcc g++ make python3 curl git 2>/dev/null || {
+    apt-get install -y -qq nodejs npm gcc g++ make python3 curl 2>/dev/null || {
         echo "⚠️ apt-get failed, continuing..."
     }
 elif command -v yum &> /dev/null; then
-    yum install -y -q nodejs npm gcc gcc-c++ make python3 curl git 2>/dev/null || {
+    yum install -y -q nodejs npm gcc gcc-c++ make python3 curl 2>/dev/null || {
         echo "⚠️ yum failed, continuing..."
     }
 elif command -v dnf &> /dev/null; then
-    dnf install -y -q nodejs npm gcc gcc-c++ make python3 curl git 2>/dev/null || {
+    dnf install -y -q nodejs npm gcc gcc-c++ make python3 curl 2>/dev/null || {
         echo "⚠️ dnf failed, continuing..."
     }
 fi
 
 # Install npm dependencies
+echo ""
 echo "📦 Installing npm dependencies..."
 if npm install --silent 2>/dev/null; then
     echo "✅ npm dependencies installed"
@@ -109,12 +84,15 @@ fi
 
 # Create .env if not exists
 if [ ! -f ".env" ]; then
+    echo ""
     echo "⚙️ Creating .env file..."
     cp .env.example .env 2>/dev/null || echo "TELEGRAM_BOT_TOKEN=your-token-here" > .env
 fi
 
 echo ""
+echo "=========================================="
 echo "✅ Installation complete!"
+echo "=========================================="
 echo ""
 echo "📝 Next steps:"
 echo "   1. Run: ./manage.sh"

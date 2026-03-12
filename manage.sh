@@ -196,6 +196,12 @@ update_bot() {
     if git fetch --quiet && git reset --hard origin/master --quiet && git pull --quiet; then
         log_info "Repository updated!"
         
+        # Download manage.sh if not present
+        if [ ! -f "manage.sh" ]; then
+            log_info "Downloading manage.sh..."
+            curl -sL "https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/manage.sh" -o manage.sh 2>/dev/null && chmod +x manage.sh && log_info "✅ manage.sh downloaded"
+        fi
+        
         log_info "Installing npm dependencies..."
         npm install --silent
         log_info "Dependencies updated!"
