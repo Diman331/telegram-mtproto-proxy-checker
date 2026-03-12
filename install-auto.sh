@@ -26,14 +26,20 @@ if ! command -v git &> /dev/null; then
 fi
 
 # Clone or update repository
-if [ -d "telegram-mtproto-proxy-checker" ]; then
-    echo "📁 Directory exists, updating..."
+if [ -d "telegram-mtproto-proxy-checker/.git" ]; then
+    echo "📁 Repository exists, updating..."
     cd telegram-mtproto-proxy-checker
     git pull --quiet
-elif [ -d "telegram-mtproto-proxy-checker-1" ]; then
-    echo "📁 Directory exists (old name), updating..."
+elif [ -d "telegram-mtproto-proxy-checker-1/.git" ]; then
+    echo "📁 Repository exists (old name), updating..."
     cd telegram-mtproto-proxy-checker-1
     git pull --quiet
+elif [ -d "telegram-mtproto-proxy-checker" ]; then
+    echo "📁 Directory exists (not a git repo), skipping clone..."
+    cd telegram-mtproto-proxy-checker
+elif [ -d "telegram-mtproto-proxy-checker-1" ]; then
+    echo "📁 Directory exists (old name, not a git repo), skipping clone..."
+    cd telegram-mtproto-proxy-checker-1
 else
     echo "📥 Cloning repository..."
     git clone --quiet https://github.com/Diman331/telegram-mtproto-proxy-checker.git
