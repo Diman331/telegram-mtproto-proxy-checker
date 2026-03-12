@@ -47,8 +47,10 @@ if [ -d "$INSTALL_DIR/.git" ]; then
         git remote add origin https://github.com/Diman331/telegram-mtproto-proxy-checker.git
     fi
     
-    # Try to fetch, if fails - reclone
-    if git fetch origin 2>/dev/null && git reset --hard origin/master 2>/dev/null; then
+    # Try to fetch and reset (try main first, then master)
+    if git fetch origin 2>/dev/null && git reset --hard origin/main 2>/dev/null; then
+        echo "✅ Repository updated"
+    elif git fetch origin 2>/dev/null && git reset --hard origin/master 2>/dev/null; then
         echo "✅ Repository updated"
     else
         echo "⚠️ Could not update, recloning..."
