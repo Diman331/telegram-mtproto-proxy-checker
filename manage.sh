@@ -2,10 +2,14 @@
 
 # Telegram MTProto Proxy Checker Bot - Management Menu
 # This script provides an interactive menu for bot management
+# Can be run from any directory
 
 set -e
 
+# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Change to script directory
 cd "$SCRIPT_DIR"
 
 # Colors
@@ -50,13 +54,14 @@ show_menu() {
     echo "  4) 🚀 Start Bot"
     echo "  5) 🛑 Stop Bot"
     echo "  6) 📊 View Bot Status"
-    echo "  7) 🗑️ Uninstall Bot"
-    echo "  8) 📖 View Documentation"
-    echo "  9) ❌ Exit"
+    echo "  7) ⚙️ Auto-start Settings"
+    echo "  8) 🗑️ Uninstall Bot"
+    echo "  9) 📖 View Documentation"
+    echo "  10) ❌ Exit"
     echo ""
-    read -p "Enter choice [1-9]: " choice
+    read -p "Enter choice [1-10]: " choice
     echo ""
-    
+
     case $choice in
         1) set_bot_token ;;
         2) set_admin_id ;;
@@ -64,9 +69,10 @@ show_menu() {
         4) start_bot ;;
         5) stop_bot ;;
         6) view_status ;;
-        7) uninstall_bot ;;
-        8) view_docs ;;
-        9) exit 0 ;;
+        7) autostart_settings ;;
+        8) uninstall_bot ;;
+        9) view_docs ;;
+        10) exit 0 ;;
         *) log_error "Invalid option"; sleep 2; show_menu ;;
     esac
 }
@@ -188,24 +194,33 @@ update_bot() {
     fi
     
     log_info "Pulling latest changes from GitHub..."
-    
+
     # Stop bot if running via systemd
     systemctl stop telegram-proxy-bot 2>/dev/null || true
-    
-    # Pull changes
-    if git fetch --quiet && git reset --hard origin/master --quiet && git pull --quiet; then
+
+    # Pull changes (try main first, then master)
+    if git fetch --quiet && git reset --hard origin/main --quiet 2>/dev/null && git pull --quiet; then
         log_info "Repository updated!"
-        
+    elif git fetch --quiet && git reset --hard origin/master --quiet 2>/dev/null && git pull --quiet; then
+        log_info "Repository updated!"
+    else
+        log_error "Failed to update repository"
+        echo ""
+        read -p "Press Enter to continue..."
+        show_menu
+        return
+    fi
+
         # Download manage.sh if not present
         if [ ! -f "manage.sh" ]; then
             log_info "Downloading manage.sh..."
-            curl -sL "https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/manage.sh" -o manage.sh 2>/dev/null && chmod +x manage.sh && log_info "✅ manage.sh downloaded"
+            curl -sL "https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/main/manage.sh" -o manage.sh 2>/dev/null && chmod +x manage.sh && log_info "✅ manage.sh downloaded"
         fi
-        
+
         log_info "Installing npm dependencies..."
         npm install --silent
         log_info "Dependencies updated!"
-        
+
         # Restart systemd if it was running
         if systemctl is-active --quiet telegram-proxy-bot; then
             systemctl start telegram-proxy-bot
@@ -213,9 +228,6 @@ update_bot() {
         else
             log_info "Update complete! Start the bot with option 4"
         fi
-    else
-        log_error "Failed to update repository"
-    fi
     
     echo ""
     read -p "Press Enter to continue..."
@@ -433,6 +445,93 @@ view_docs() {
         4) less CONTRIBUTING.md ;;
     esac
     
+    show_menu
+}
+
+# Auto-start settings
+autostart_settings() {
+    echo ""
+    echo "=========================================="
+    echo "  Auto-start Settings (systemd)"
+    echo "=========================================="
+    echo ""
+    
+    # Check if service exists
+    if [ -f "/etc/systemd/system/telegram-proxy-bot.service" ]; then
+        log_info "Systemd service found!"
+        echo ""
+        
+        if systemctl is-active --quiet telegram-proxy-bot; then
+            echo "  Status: ✅ Running"
+        else
+            echo "  Status: ❌ Stopped"
+        fi
+        
+        if systemctl is-enabled --quiet telegram-proxy-bot 2>/dev/null; then
+            echo "  Auto-start: ✅ Enabled"
+        else
+            echo "  Auto-start: ❌ Disabled"
+        fi
+    else
+        log_warn "Systemd service not installed"
+    fi
+    
+    echo ""
+    echo "Select an option:"
+    echo ""
+    echo "  1) Enable auto-start"
+    echo "  2) Disable auto-start"
+    echo "  3) Start service"
+    echo "  4) Stop service"
+    echo "  5) Restart service"
+    echo "  6) View service logs"
+    echo "  7) Back to menu"
+    echo ""
+    read -p "Enter choice [1-7]: " as_choice
+    echo ""
+    
+    case $as_choice in
+        1)
+            log_info "Enabling auto-start..."
+            systemctl daemon-reload
+            systemctl enable telegram-proxy-bot
+            log_info "Auto-start enabled!"
+            ;;
+        2)
+            log_info "Disabling auto-start..."
+            systemctl disable telegram-proxy-bot
+            log_info "Auto-start disabled!"
+            ;;
+        3)
+            log_info "Starting service..."
+            systemctl start telegram-proxy-bot
+            log_info "Service started!"
+            ;;
+        4)
+            log_info "Stopping service..."
+            systemctl stop telegram-proxy-bot
+            log_info "Service stopped!"
+            ;;
+        5)
+            log_info "Restarting service..."
+            systemctl restart telegram-proxy-bot
+            log_info "Service restarted!"
+            ;;
+        6)
+            echo "Recent logs (last 50 lines):"
+            echo ""
+            journalctl -u telegram-proxy-bot -n 50 --no-pager
+            ;;
+        7)
+            show_menu
+            ;;
+        *)
+            log_error "Invalid option"
+            ;;
+    esac
+    
+    echo ""
+    read -p "Press Enter to continue..."
     show_menu
 }
 

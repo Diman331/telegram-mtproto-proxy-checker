@@ -108,6 +108,16 @@ if [ ! -f ".env" ]; then
     cp .env.example .env 2>/dev/null || echo "TELEGRAM_BOT_TOKEN=your-token-here" > .env
 fi
 
+# Add alias to bashrc for easy access
+if ! grep -q "alias botmanager=" ~/.bashrc 2>/dev/null; then
+    echo "" >> ~/.bashrc
+    echo "# Telegram Proxy Bot Manager" >> ~/.bashrc
+    echo "alias botmanager='$INSTALL_DIR/manage.sh'" >> ~/.bashrc
+    echo ""
+    echo "💡 Tip: Run 'botmanager' from anywhere to manage the bot"
+    echo "   Or add to PATH: export PATH=\$PATH:$INSTALL_DIR"
+fi
+
 echo ""
 echo "=========================================="
 echo "✅ Installation complete!"
