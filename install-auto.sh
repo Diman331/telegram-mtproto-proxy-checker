@@ -108,15 +108,16 @@ if [ ! -f ".env" ]; then
     cp .env.example .env 2>/dev/null || echo "TELEGRAM_BOT_TOKEN=your-token-here" > .env
 fi
 
-# Add alias to bashrc for easy access
-if ! grep -q "alias botmanager=" ~/.bashrc 2>/dev/null; then
-    echo "" >> ~/.bashrc
-    echo "# Telegram Proxy Bot Manager" >> ~/.bashrc
-    echo "alias botmanager='$INSTALL_DIR/manage.sh'" >> ~/.bashrc
-    echo ""
-    echo "💡 Tip: Run 'botmanager' from anywhere to manage the bot"
-    echo "   Or add to PATH: export PATH=\$PATH:$INSTALL_DIR"
-fi
+# Create global command wrapper
+echo ""
+echo "🔧 Setting up global command..."
+cat > /usr/local/bin/mtprotobot << WRAPPER
+#!/bin/bash
+# Telegram MTProto Proxy Checker Bot Manager
+exec "$INSTALL_DIR/manage.sh" "\$@"
+WRAPPER
+chmod +x /usr/local/bin/mtprotobot
+echo "✅ Global command 'mtprotobot' installed"
 
 echo ""
 echo "=========================================="
@@ -124,7 +125,7 @@ echo "✅ Installation complete!"
 echo "=========================================="
 echo ""
 echo "📝 Next steps:"
-echo "   1. Run: ./manage.sh"
+echo "   1. Run: mtprotobot (from any directory)"
 echo "   2. Add your TELEGRAM_BOT_TOKEN from @BotFather"
 echo "   3. (Optional) Add ADMIN_ID from @userinfobot"
 echo "   4. Start the bot from the menu"
@@ -133,5 +134,7 @@ echo "📚 Documentation:"
 echo "   - README.md"
 echo "   - AUTO_START.md (for systemd auto-start)"
 echo "   - PROJECT_SUMMARY.md (project overview)"
-echo "   - manage.sh (management menu)"
+echo ""
+echo "🚀 Quick start:"
+echo "   mtprotobot  # Run from anywhere!"
 echo ""
