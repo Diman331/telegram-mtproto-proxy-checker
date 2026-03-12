@@ -64,6 +64,30 @@ check_root() {
     fi
 }
 
+# Check and install git
+check_git() {
+    if ! command -v git &> /dev/null; then
+        log_warn "Git is not installed. Installing..."
+        case $PM in
+            apt)
+                apt-get install -y -qq git 2>/dev/null || true
+                ;;
+            yum|dnf)
+                yum install -y -q git 2>/dev/null || true
+                ;;
+            pacman)
+                pacman -Sy --noconfirm git 2>/dev/null || true
+                ;;
+            apk)
+                apk add --no-cache git 2>/dev/null || true
+                ;;
+        esac
+        log_info "Git installed"
+    else
+        log_info "Git is already installed"
+    fi
+}
+
 # Detect package manager
 detect_package_manager() {
     if command -v apt-get &> /dev/null; then
@@ -203,6 +227,9 @@ do_install() {
     # Detect package manager
     detect_package_manager
     
+    # Check and install git
+    check_git
+    
     # Check Node.js
     if ! check_nodejs; then
         install_system_deps
@@ -228,6 +255,7 @@ do_install() {
     log_info "Documentation:"
     echo "  - README.md - General documentation"
     echo "  - AUTO_START.md - Auto-start guide"
+    echo "  - PROJECT_SUMMARY.md - Project overview"
     echo ""
     
     # Ask about systemd setup
