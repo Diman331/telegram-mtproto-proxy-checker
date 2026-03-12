@@ -143,6 +143,7 @@ Type=simple
 User=root
 WorkingDirectory=$INSTALL_DIR
 EnvironmentFile=$INSTALL_DIR/.env
+Environment="LD_LIBRARY_PATH=$INSTALL_DIR/node_modules/@prebuilt-tdlib/linux-arm64-glibc"
 ExecStart=/usr/bin/node $INSTALL_DIR/bot.js
 Restart=always
 RestartSec=10

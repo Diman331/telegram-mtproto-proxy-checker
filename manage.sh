@@ -272,6 +272,10 @@ start_bot() {
         set -a
         source .env
         set +a
+        
+        # Set LD_LIBRARY_PATH for TDLib
+        export LD_LIBRARY_PATH="$SCRIPT_DIR/node_modules/@prebuilt-tdlib/linux-arm64-glibc:$LD_LIBRARY_PATH"
+        
         node bot.js
     fi
     
@@ -575,6 +579,7 @@ Type=simple
 User=root
 WorkingDirectory=$SCRIPT_DIR
 EnvironmentFile=$SCRIPT_DIR/.env
+Environment="LD_LIBRARY_PATH=$SCRIPT_DIR/node_modules/@prebuilt-tdlib/linux-arm64-glibc"
 ExecStart=/usr/bin/node $SCRIPT_DIR/bot.js
 Restart=always
 RestartSec=10
