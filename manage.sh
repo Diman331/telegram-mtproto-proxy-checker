@@ -185,14 +185,14 @@ update_bot() {
     echo "  Update Bot from GitHub"
     echo "=========================================="
     echo ""
-    
+
     if [ ! -d ".git" ]; then
         log_error "Not a git repository. Cannot update."
         sleep 2
         show_menu
         return
     fi
-    
+
     log_info "Pulling latest changes from GitHub..."
 
     # Stop bot if running via systemd
@@ -211,24 +211,24 @@ update_bot() {
         return
     fi
 
-        # Download manage.sh if not present
-        if [ ! -f "manage.sh" ]; then
-            log_info "Downloading manage.sh..."
-            curl -sL "https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/main/manage.sh" -o manage.sh 2>/dev/null && chmod +x manage.sh && log_info "✅ manage.sh downloaded"
-        fi
+    # Download manage.sh if not present
+    if [ ! -f "manage.sh" ]; then
+        log_info "Downloading manage.sh..."
+        curl -sL "https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/main/manage.sh" -o manage.sh 2>/dev/null && chmod +x manage.sh && log_info "✅ manage.sh downloaded"
+    fi
 
-        log_info "Installing npm dependencies..."
-        npm install --silent
-        log_info "Dependencies updated!"
+    log_info "Installing npm dependencies..."
+    npm install --silent
+    log_info "Dependencies updated!"
 
-        # Restart systemd if it was running
-        if systemctl is-active --quiet telegram-proxy-bot; then
-            systemctl start telegram-proxy-bot
-            log_info "Bot service restarted"
-        else
-            log_info "Update complete! Start the bot with option 4"
-        fi
-    
+    # Restart systemd if it was running
+    if systemctl is-active --quiet telegram-proxy-bot; then
+        systemctl start telegram-proxy-bot
+        log_info "Bot service restarted"
+    else
+        log_info "Update complete! Start the bot with option 4"
+    fi
+
     echo ""
     read -p "Press Enter to continue..."
     show_menu

@@ -54,12 +54,21 @@ if [ -d "$INSTALL_DIR/.git" ]; then
         echo "✅ Repository updated"
     else
         echo "⚠️ Could not update, recloning..."
+        # Backup .env before recloning
+        if [ -f "$INSTALL_DIR/.env" ]; then
+            cp "$INSTALL_DIR/.env" /tmp/backup.env
+        fi
         cd /tmp
         rm -rf telegram-mtproto-proxy-checker 2>/dev/null || true
         git clone --quiet https://github.com/Diman331/telegram-mtproto-proxy-checker.git
         rm -rf "$INSTALL_DIR" 2>/dev/null || true
         mv telegram-mtproto-proxy-checker "$INSTALL_DIR"
         cd "$INSTALL_DIR"
+        # Restore .env
+        if [ -f /tmp/backup.env ]; then
+            mv /tmp/backup.env .env
+            echo "✅ .env restored"
+        fi
         echo "✅ Repository recloned"
     fi
 else
