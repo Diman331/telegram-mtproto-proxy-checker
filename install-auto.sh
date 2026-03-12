@@ -120,11 +120,7 @@ fi
 # Create global command wrapper
 echo ""
 echo "🔧 Setting up global command..."
-cat > /usr/local/bin/mtprotobot << WRAPPER
-#!/bin/bash
-# Telegram MTProto Proxy Checker Bot Manager
-exec "$INSTALL_DIR/manage.sh" "\$@"
-WRAPPER
+printf '%s\n' '#!/bin/bash' '# Telegram MTProto Proxy Checker Bot Manager' "exec \"$INSTALL_DIR/manage.sh\" \"\$@\"" > /usr/local/bin/mtprotobot
 chmod +x /usr/local/bin/mtprotobot
 echo "✅ Global command 'mtprotobot' installed"
 
