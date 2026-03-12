@@ -39,9 +39,18 @@ fi
 # Clone or update repository
 if [ -d "$INSTALL_DIR/.git" ]; then
     echo "📁 Repository exists, updating from GitHub..."
-    git fetch --quiet
+    
+    # Set or update remote
+    git remote get-url origin 2>/dev/null | grep -q "Diman331" || {
+        git remote remove origin 2>/dev/null || true
+        git remote add origin https://github.com/Diman331/telegram-mtproto-proxy-checker.git
+    }
+    
+    # Fetch and reset to latest
+    git fetch origin --quiet
     git reset --hard origin/master --quiet
-    git pull --quiet
+    git pull origin --quiet
+    
     echo "✅ Repository updated"
 else
     echo "📥 Cloning repository from GitHub..."
