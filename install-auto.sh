@@ -38,20 +38,28 @@ fi
 
 # Clone or update repository
 if [ -d "$INSTALL_DIR/.git" ]; then
-    echo "📁 Repository exists, updating from GitHub..."
+    echo "📁 Repository exists, checking remote..."
     
-    # Set or update remote
-    git remote get-url origin 2>/dev/null | grep -q "Diman331" || {
+    # Check if remote points to correct repo
+    if ! git remote get-url origin 2>/dev/null | grep -q "Diman331/telegram-mtproto-proxy-checker"; then
+        echo "🔄 Fixing remote..."
         git remote remove origin 2>/dev/null || true
         git remote add origin https://github.com/Diman331/telegram-mtproto-proxy-checker.git
-    }
+    fi
     
-    # Fetch and reset to latest
-    git fetch origin --quiet
-    git reset --hard origin/master --quiet
-    git pull origin --quiet
-    
-    echo "✅ Repository updated"
+    # Try to fetch, if fails - reclone
+    if git fetch origin 2>/dev/null && git reset --hard origin/master 2>/dev/null; then
+        echo "✅ Repository updated"
+    else
+        echo "⚠️ Could not update, recloning..."
+        cd /tmp
+        rm -rf telegram-mtproto-proxy-checker 2>/dev/null || true
+        git clone --quiet https://github.com/Diman331/telegram-mtproto-proxy-checker.git
+        rm -rf "$INSTALL_DIR" 2>/dev/null || true
+        mv telegram-mtproto-proxy-checker "$INSTALL_DIR"
+        cd "$INSTALL_DIR"
+        echo "✅ Repository recloned"
+    fi
 else
     echo "📥 Cloning repository from GitHub..."
     cd /tmp
