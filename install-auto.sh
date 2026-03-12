@@ -1,10 +1,21 @@
 #!/bin/bash
 
 # One-line installer for Telegram MTProto Proxy Checker Bot
-# Usage: curl -sL https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh | bash
+# Usage: curl -sL https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/main/install-auto.sh | bash
+# This script will download itself to a temp file if run via pipe to avoid execution while downloading
 
 set -e
 
+# Check if running from pipe (curl | bash)
+if ! [ -t 0 ]; then
+    # Running from pipe - download to temp file first
+    TEMP_SCRIPT=$(mktemp)
+    curl -sL "https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/main/install-auto.sh" -o "$TEMP_SCRIPT"
+    exec bash "$TEMP_SCRIPT"
+    exit 0
+fi
+
+# Running from file - continue normally
 echo "🤖 Telegram MTProto Proxy Checker Bot - Quick Install"
 echo ""
 
