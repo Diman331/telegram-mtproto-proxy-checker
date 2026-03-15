@@ -241,7 +241,7 @@ start_bot() {
     echo "  Start Bot"
     echo "=========================================="
     echo ""
-    
+
     # Check if .env exists and has token
     if [ ! -f ".env" ]; then
         log_error ".env file not found. Please set bot token first (option 1)"
@@ -249,7 +249,7 @@ start_bot() {
         show_menu
         return
     fi
-    
+
     token=$(grep "^TELEGRAM_BOT_TOKEN=" .env 2>/dev/null | cut -d'=' -f2)
     if [ -z "$token" ] || [ "$token" = "your-bot-token-here" ]; then
         log_error "Bot token not set. Please set it first (option 1)"
@@ -257,7 +257,7 @@ start_bot() {
         show_menu
         return
     fi
-    
+
     # Check if systemd service exists
     if [ -f "/etc/systemd/system/telegram-proxy-bot.service" ]; then
         log_info "Starting bot via systemd..."
@@ -272,13 +272,10 @@ start_bot() {
         set -a
         source .env
         set +a
-        
-        # Set LD_LIBRARY_PATH for TDLib
-        export LD_LIBRARY_PATH="$SCRIPT_DIR/node_modules/@prebuilt-tdlib/linux-arm64-glibc:$LD_LIBRARY_PATH"
-        
+
         node bot.js
     fi
-    
+
     echo ""
     read -p "Press Enter to continue..."
     show_menu
@@ -553,21 +550,21 @@ autostart_settings() {
 install_systemd_service() {
     echo ""
     echo "Installing systemd service..."
-    
+
     # Check .env
     if [ ! -f ".env" ]; then
         log_error ".env not found. Set bot token first!"
         return
     fi
-    
+
     # Load env to validate
     source .env 2>/dev/null || true
-    
+
     if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ "$TELEGRAM_BOT_TOKEN" = "your-bot-token-here" ]; then
         log_error "Bot token not set in .env!"
         return
     fi
-    
+
     # Create service file
     cat > /etc/systemd/system/telegram-proxy-bot.service << EOF
 [Unit]
@@ -579,20 +576,21 @@ Type=simple
 User=root
 WorkingDirectory=$SCRIPT_DIR
 EnvironmentFile=$SCRIPT_DIR/.env
-Environment="LD_LIBRARY_PATH=$SCRIPT_DIR/node_modules/@prebuilt-tdlib/linux-arm64-glibc"
 ExecStart=/usr/bin/node $SCRIPT_DIR/bot.js
 Restart=always
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 EOF
-    
+
     # Reload and enable
     systemctl daemon-reload
     systemctl enable telegram-proxy-bot
     systemctl start telegram-proxy-bot
-    
+
     log_info "Systemd service installed and started!"
     echo ""
     read -p "Press Enter to continue..."

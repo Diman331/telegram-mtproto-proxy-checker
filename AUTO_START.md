@@ -10,6 +10,12 @@
 
 Выберите опцию **1) Install** и согласитесь на настройку systemd.
 
+Или используйте быструю установку:
+
+```bash
+curl -sL https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh | bash
+```
+
 ## Ручная настройка
 
 ## 1. Создайте службу systemd
@@ -28,12 +34,13 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/telegram-mtproto-proxy-checker-1
-Environment="TELEGRAM_BOT_TOKEN=your-bot-token"
-Environment="ADMIN_ID=your-telegram-id"
-ExecStart=/usr/bin/node bot.js
+WorkingDirectory=/path/to/bot
+EnvironmentFile=/path/to/bot/.env
+ExecStart=/usr/bin/node /path/to/bot/bot.js
 Restart=always
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -73,24 +80,15 @@ sudo systemctl disable telegram-proxy-bot
 
 ## 4. Настройка переменных окружения
 
-Для изменения токена или ADMIN_ID отредактируйте службу:
+Для изменения токена или ADMIN_ID отредактируйте файл `.env`:
 
 ```bash
-sudo systemctl edit telegram-proxy-bot
+nano .env
 ```
 
-Добавьте:
-
-```ini
-[Service]
-Environment="TELEGRAM_BOT_TOKEN=new-token"
-Environment="ADMIN_ID=new-admin-id"
-```
-
-Затем перезапустите:
+Затем перезапустите службу:
 
 ```bash
-sudo systemctl daemon-reload
 sudo systemctl restart telegram-proxy-bot
 ```
 
