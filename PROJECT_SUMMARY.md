@@ -82,9 +82,9 @@
 ```json
 {
   "telegraf": "^4.16.3",
-  "tdl": "^7.4.1",
-  "tdl-tdlib-addon": "^1.2.2",
-  "prebuilt-tdlib": "^0.1008059.0"
+  "tdl": "^8.1.0",
+  "prebuilt-tdlib": "^0.1008059.0",
+  "dotenv": "^16.x"
 }
 ```
 
@@ -162,14 +162,14 @@ curl -sL https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-check
 ## Системные требования
 
 - Node.js ≥ 18
-- gcc, g++, make (для компиляции native modules)
 - systemd (для автозапуска, опционально)
 
 ## Известные проблемы
 
 1. **Кнопки не работают** — были исправлены (был `Markup.keyboard` вместо `Markup.inlineKeyboard`)
 2. **/chkdb не реагировал** — исправлено (неправильный вызов `bot.command()`)
-3. **libtdjson.so не находится** — решено симлинком в `/usr/lib/`
+3. **libtdjson.so не находится** — решено через `prebuilt-tdlib`
+4. **tdl-tdlib-addon требует компиляции** — решено переходом на tdl v8 + prebuilt-tdlib
 
 ## Контакты разработчика
 

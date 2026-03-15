@@ -1,30 +1,10 @@
 #!/usr/bin/env node
 
-// Set LD_LIBRARY_PATH before loading TDLib
-const path = require('path');
+const tdl = require('tdl');
 const { getTdjson } = require('prebuilt-tdlib');
 
-try {
-  const tdlibPath = path.dirname(getTdjson());
-  const currentLdPath = process.env.LD_LIBRARY_PATH || '';
-  if (!currentLdPath.includes(tdlibPath)) {
-    process.env.LD_LIBRARY_PATH = tdlibPath + (currentLdPath ? ':' + currentLdPath : '');
-  }
-} catch (error) {
-  // Ignore if prebuilt-tdlib not available
-}
-
-const { Client } = require('tdl');
-const { TDLib } = require('tdl-tdlib-addon');
-const tdl = require('tdl');
-
 // Configure tdl to use prebuilt TDLib
-try {
-  tdl.configure({ tdjson: getTdjson() });
-} catch (error) {
-  // If prebuilt-tdlib fails, try system library
-  // This allows fallback to system-installed TDLib
-}
+tdl.configure({ tdjson: getTdjson() });
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -183,21 +163,7 @@ function extractErrorMessage(error) {
 
 // Main verification function
 async function verifyProxy(server, port, hexSecret) {
-  // TDLib can add and ping proxies before authorization
-  // We use placeholder values - actual auth is not needed for proxy operations
-  
-  // Get TDLib DLL path from prebuilt-tdlib
-  let tdlibPath;
-  try {
-    tdlibPath = getTdjson();
-  } catch (error) {
-    // Fallback to default
-    tdlibPath = null;
-  }
-  
-  // Create TDLib instance - it should find the DLL via tdl.configure()
-  const tdlib = new TDLib();
-  const client = new Client(tdlib, {
+  const client = tdl.createClient({
     apiId: 12345,
     apiHash: '0123456789abcdef0123456789abcdef',
     useTestDc: false,
@@ -205,9 +171,13 @@ async function verifyProxy(server, port, hexSecret) {
     filesDirectory: './tdlib-files',
   });
 
+  client.on('error', (err) => {
+    if (debugMode) {
+      console.error(`[DEBUG] Client error:`, err.message);
+    }
+  });
+
   try {
-    await client.connect();
-    
     if (debugMode) {
       console.error(`[DEBUG] Connected to TDLib`);
       console.error(`[DEBUG] Server: ${server}`);

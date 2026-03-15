@@ -18,12 +18,12 @@ A Node.js CLI tool that verifies Telegram MTProto proxies by actually communicat
 
 ### Быстрая установка (рекомендуется)
 
+**Для Linux VPS:**
 ```bash
 curl -sL https://raw.githubusercontent.com/Diman331/telegram-mtproto-proxy-checker/master/install-auto.sh | bash
 ```
 
 Или скачайте и запустите вручную:
-
 ```bash
 chmod +x install-auto.sh
 ./install-auto.sh
@@ -31,6 +31,7 @@ chmod +x install-auto.sh
 
 ### Ручная установка
 
+**Linux:**
 ```bash
 # Клонируйте репозиторий
 git clone https://github.com/Diman331/telegram-mtproto-proxy-checker.git
@@ -42,6 +43,23 @@ npm install
 # Настройте переменные окружения
 cp .env.example .env
 nano .env  # Добавьте TELEGRAM_BOT_TOKEN и ADMIN_ID
+
+# Запустите бота
+npm run bot
+```
+
+**Windows:**
+```bash
+# Клонируйте репозиторий
+git clone https://github.com/Diman331/telegram-mtproto-proxy-checker.git
+cd telegram-mtproto-proxy-checker
+
+# Установите зависимости
+npm install
+
+# Настройте переменные окружения
+copy .env.example .env
+notepad .env  # Добавьте TELEGRAM_BOT_TOKEN и ADMIN_ID
 
 # Запустите бота
 npm run bot

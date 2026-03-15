@@ -47,7 +47,7 @@ show_menu() {
     echo ""
     read -p "Enter choice [1-4]: " choice
     echo ""
-    
+
     case $choice in
         1) do_install ;;
         2) do_update ;;
@@ -59,9 +59,28 @@ show_menu() {
 
 # Check if running as root
 check_root() {
-    if [ "$EUID" -ne 0 ]; then 
+    if [ "$EUID" -ne 0 ]; then
         log_warn "Some commands may require sudo. You may be prompted for password."
     fi
+}
+
+# Detect package manager
+detect_package_manager() {
+    if command -v apt-get &> /dev/null; then
+        PM="apt"
+    elif command -v yum &> /dev/null; then
+        PM="yum"
+    elif command -v dnf &> /dev/null; then
+        PM="dnf"
+    elif command -v pacman &> /dev/null; then
+        PM="pacman"
+    elif command -v apk &> /dev/null; then
+        PM="apk"
+    else
+        log_error "Unsupported package manager"
+        exit 1
+    fi
+    log_info "Detected package manager: $PM"
 }
 
 # Check and install git
@@ -88,45 +107,37 @@ check_git() {
     fi
 }
 
-# Detect package manager
-detect_package_manager() {
-    if command -v apt-get &> /dev/null; then
-        PM="apt"
-    elif command -v yum &> /dev/null; then
-        PM="yum"
-    elif command -v dnf &> /dev/null; then
-        PM="dnf"
-    elif command -v pacman &> /dev/null; then
-        PM="pacman"
-    elif command -v apk &> /dev/null; then
-        PM="apk"
-    else
-        log_error "Unsupported package manager"
-        exit 1
-    fi
-    log_info "Detected package manager: $PM"
-}
-
 # Install system dependencies
 install_system_deps() {
     log_info "Installing system dependencies..."
-    
+
     case $PM in
         apt)
             apt-get update -qq
-            apt-get install -y -qq nodejs npm gcc g++ make python3 curl 2>/dev/null || true
+            apt-get install -y -qq nodejs npm curl 2>/dev/null || {
+                # Try installing from NodeSource if repo version is too old
+                if ! command -v node &> /dev/null || [ "$(node -v | cut -d'.' -f1 | sed 's/v//')" -lt 18 ]; then
+                    log_info "Installing Node.js 18+ from NodeSource..."
+                    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - >/dev/null 2>&1
+                    apt-get install -y -qq nodejs
+                fi
+            }
             ;;
         yum|dnf)
-            yum install -y -q nodejs npm gcc gcc-c++ make python3 curl 2>/dev/null || true
+            $PM install -y -q nodejs npm curl 2>/dev/null || {
+                if ! command -v node &> /dev/null || [ "$(node -v | cut -d'.' -f1 | sed 's/v//')" -lt 18 ]; then
+                    $PM install -y -q nodejs
+                fi
+            }
             ;;
         pacman)
-            pacman -Sy --noconfirm nodejs npm gcc make python curl 2>/dev/null || true
+            pacman -Sy --noconfirm nodejs npm curl 2>/dev/null || true
             ;;
         apk)
-            apk add --no-cache nodejs npm gcc g++ make python3 curl 2>/dev/null || true
+            apk add --no-cache nodejs npm curl 2>/dev/null || true
             ;;
     esac
-    
+
     log_info "System dependencies installed"
 }
 
@@ -137,10 +148,11 @@ check_nodejs() {
         log_error "Node.js is not installed"
         return 1
     fi
-    
-    NODE_MAJOR=$(node -v | cut -d'.' -f1 | sed 's/v//')
+
+    NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d'.' -f1 | sed 's/v//')
     if [ "$NODE_MAJOR" -lt 18 ]; then
         log_warn "Node.js version is $NODE_VERSION, but 18+ is recommended"
+        return 1
     else
         log_info "Node.js version: $NODE_VERSION ✓"
     fi
@@ -150,8 +162,12 @@ check_nodejs() {
 # Install npm dependencies
 install_npm_deps() {
     log_info "Installing npm dependencies..."
-    npm install --silent
-    log_info "npm dependencies installed"
+    if npm install --silent 2>/dev/null; then
+        log_info "npm dependencies installed"
+    else
+        log_warn "npm install failed, trying with --unsafe-perm..."
+        npm install --silent --unsafe-perm || log_error "npm install failed completely"
+    fi
 }
 
 # Create .env file
@@ -171,20 +187,20 @@ setup_systemd() {
     echo ""
     read -p "Setup auto-start with systemd? (y/n): " -n 1 -r
     echo ""
-    
+
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         log_info "Setting up systemd service..."
-        
+
         # Get absolute path
         BOT_PATH=$(pwd)
-        
+
         # Read environment variables
         source .env 2>/dev/null || true
-        
+
         # Stop existing service if running
         systemctl stop telegram-proxy-bot 2>/dev/null || true
         systemctl disable telegram-proxy-bot 2>/dev/null || true
-        
+
         # Create service file
         cat > /etc/systemd/system/telegram-proxy-bot.service << EOF
 [Unit]
@@ -195,21 +211,22 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$BOT_PATH
-Environment="TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN"
-Environment="ADMIN_ID=$ADMIN_ID"
+EnvironmentFile=$BOT_PATH/.env
 ExecStart=/usr/bin/node $BOT_PATH/bot.js
 Restart=always
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 EOF
-        
+
         # Reload and enable
         systemctl daemon-reload
         systemctl enable telegram-proxy-bot
         systemctl start telegram-proxy-bot
-        
+
         log_info "Systemd service created and started"
         log_info "Check status: systemctl status telegram-proxy-bot"
         log_info "View logs: journalctl -u telegram-proxy-bot -f"
@@ -223,25 +240,25 @@ EOF
 do_install() {
     log_info "Starting installation..."
     echo ""
-    
+
     # Detect package manager
     detect_package_manager
-    
+
     # Check and install git
     check_git
-    
+
     # Check Node.js
     if ! check_nodejs; then
         install_system_deps
         check_nodejs
     fi
-    
+
     # Install npm dependencies
     install_npm_deps
-    
+
     # Create .env file
     create_env_file
-    
+
     echo ""
     echo "=========================================="
     echo "  Installation Complete!"
@@ -259,10 +276,10 @@ do_install() {
     echo "  - manage.sh - Management menu"
     echo ""
     log_info "Run './manage.sh' for interactive management"
-    
+
     # Ask about systemd setup
     setup_systemd
-    
+
     echo ""
     log_info "Return to menu..."
     sleep 2
@@ -273,7 +290,7 @@ do_install() {
 do_update() {
     log_info "Starting update..."
     echo ""
-    
+
     # Check if git repository exists
     if [ ! -d ".git" ]; then
         log_error "Not a git repository. Cannot update."
@@ -283,26 +300,26 @@ do_update() {
         show_menu
         return
     fi
-    
+
     # Stop service if running
     systemctl stop telegram-proxy-bot 2>/dev/null || true
-    
+
     # Pull latest changes
     log_info "Pulling latest changes from GitHub..."
     git fetch --quiet
     git reset --hard origin/master --quiet
     git pull --quiet
-    
+
     # Install/update npm dependencies
     log_info "Updating npm dependencies..."
     npm install --silent
-    
+
     # Restart service if it was running
     if systemctl is-active --quiet telegram-proxy-bot; then
         systemctl start telegram-proxy-bot
         log_info "Bot service restarted"
     fi
-    
+
     echo ""
     echo "=========================================="
     echo "  Update Complete!"
@@ -311,7 +328,7 @@ do_update() {
     log_info "The bot has been updated to the latest version."
     log_info "Run 'npm run bot' to start (or check systemd service)"
     echo ""
-    
+
     log_info "Return to menu..."
     sleep 2
     show_menu
@@ -323,7 +340,7 @@ do_uninstall() {
     echo ""
     read -p "Are you sure? (y/n): " -n 1 -r
     echo ""
-    
+
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_info "Uninstall cancelled"
         echo ""
@@ -332,29 +349,29 @@ do_uninstall() {
         show_menu
         return
     fi
-    
+
     # Stop and disable systemd service
     log_info "Stopping systemd service..."
     systemctl stop telegram-proxy-bot 2>/dev/null || true
     systemctl disable telegram-proxy-bot 2>/dev/null || true
     rm -f /etc/systemd/system/telegram-proxy-bot.service
     systemctl daemon-reload
-    
+
     # Remove npm dependencies
     log_info "Removing node_modules..."
     rm -rf node_modules
-    
+
     # Remove data files
     log_info "Removing data files..."
     rm -f proxies_db.json
     rm -f bot_settings.json
     rm -f .env
     rm -f *.txt
-    
+
     # Remove temp files
     rm -f working_proxies_*.txt
     rm -f proxy_checked_*.txt
-    
+
     echo ""
     echo "=========================================="
     echo "  Uninstall Complete!"
@@ -364,7 +381,7 @@ do_uninstall() {
     log_warn "Your .git directory and source files are preserved."
     log_warn "To reinstall, run this script again and choose 'Install'"
     echo ""
-    
+
     log_info "Return to menu..."
     sleep 2
     show_menu

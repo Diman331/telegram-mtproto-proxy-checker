@@ -1,31 +1,16 @@
 #!/usr/bin/env node
 
-// Set LD_LIBRARY_PATH before loading TDLib
+// Load environment variables from .env
+require('dotenv').config();
+
 const path = require('path');
+const { Telegraf, Markup } = require('telegraf');
+const tdl = require('tdl');
+const fs = require('fs');
 const { getTdjson } = require('prebuilt-tdlib');
 
-try {
-  const tdlibPath = path.dirname(getTdjson());
-  const currentLdPath = process.env.LD_LIBRARY_PATH || '';
-  if (!currentLdPath.includes(tdlibPath)) {
-    process.env.LD_LIBRARY_PATH = tdlibPath + (currentLdPath ? ':' + currentLdPath : '');
-  }
-} catch (error) {
-  // Ignore if prebuilt-tdlib not available
-}
-
-const { Telegraf, Markup } = require('telegraf');
-const { Client } = require('tdl');
-const { TDLib } = require('tdl-tdlib-addon');
-const fs = require('fs');
-const tdl = require('tdl');
-
 // Configure tdl to use prebuilt TDLib
-try {
-  tdl.configure({ tdjson: getTdjson() });
-} catch (error) {
-  // If prebuilt-tdlib fails, try system library
-}
+tdl.configure({ tdjson: getTdjson() });
 
 // Get bot token from environment variable
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -283,15 +268,7 @@ function extractErrorMessage(error) {
 
 // Verify proxy and return result with latency
 async function verifyProxy(server, port, hexSecret) {
-  let tdlibPath;
-  try {
-    tdlibPath = getTdjson();
-  } catch (error) {
-    tdlibPath = null;
-  }
-
-  const tdlib = new TDLib();
-  const client = new Client(tdlib, {
+  const client = tdl.createClient({
     apiId: 12345,
     apiHash: '0123456789abcdef0123456789abcdef',
     useTestDc: false,
@@ -299,13 +276,15 @@ async function verifyProxy(server, port, hexSecret) {
     filesDirectory: './tdlib-files',
   });
 
+  client.on('error', (err) => {
+    console.error('[TDLib Error]:', err.message);
+  });
+
   let latency = null;
   let success = false;
   let error = null;
 
   try {
-    await client.connect();
-
     // Add proxy
     let addProxyResult;
     try {
